@@ -9,7 +9,7 @@ class EmoDB(Dataset):
 
     def __init__(self, annotations_file, audio_dir, transformation,
                  target_sample_rate, num_samples, device):
-        self.annotations = pd.read_csv(annotations_file, sep=';')
+        self.annotations = pd.read_csv(annotations_file)
         self.audio_dir = audio_dir
         self.device = device
         self.transformation = transformation.to(self.device)
@@ -33,7 +33,7 @@ class EmoDB(Dataset):
         return signal, label
 
     def _cut_if_necessary(self, signal):
-        # signal -> Tesnor -> (1, num_samples)
+        # signal -> Tensor -> (1, num_samples)
         if signal.shape[1] > self.num_samples:
             signal = signal[:, :self.num_samples]
         return signal
@@ -60,18 +60,17 @@ class EmoDB(Dataset):
         return signal
 
     def _get_audio_sample_path(self, index):
-        fold = f"fold{self.annotations.iloc[index, 5]}"
-        path = os.path.join(self.audio_dir, fold, self.annotations.iloc[
+        path = os.path.join(self.audio_dir, self.annotations.iloc[
             index, 0])
         return path
 
     def _get_audio_sample_label(self, index):
-        return self.annotations.iloc[index, 6]
+        return self.annotations.iloc[index, 2]
 
 
 if __name__ == "__main__":
-    ANNOTATIONS_FILE = "D:/MyPythonStuff/PyTorch/UrbanSound8K/metadata/UrbanSound8K.csv"
-    AUDIO_DIR = "D:/MyPythonStuff/PyTorch/UrbanSound8K/audio"
+    AUDIO_DIR = "./EmoDb_berlin_database/audio"
+    ANNOTATIONS_FILE = "./EmoDb_berlin_database/metadata/EmoDB.csv"
     SAMPLE_RATE = 22050
     NUM_SAMPLES = 22050
 
@@ -87,8 +86,11 @@ if __name__ == "__main__":
         hop_length=512,
         n_mels=64
     )
-
-    usd = UrbanSoundDataset(ANNOTATIONS_FILE, AUDIO_DIR, mel_spectrogram,
+    # hardcoding "device" as error
+    # Input type (torch.cuda.FloatTensor) and weight type (torch.FloatTensor) should be the same
+    # unsolved
+    device = "cpu"
+    emodb = EmoDB(ANNOTATIONS_FILE, AUDIO_DIR, mel_spectrogram,
                             SAMPLE_RATE, NUM_SAMPLES, device)
-    print(f"There are {len(usd)} samples in the dataset.")
-    signal, label = usd[0]
+    print(f"There are {len(emodb)} samples in the dataset.")
+    signal, label = emodb[0]
